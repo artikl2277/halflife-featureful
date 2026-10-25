@@ -73,7 +73,7 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 		return true;
 	}
 
-	return false;
+	return true;
 }
 
 //-------------------------------------------------------------
