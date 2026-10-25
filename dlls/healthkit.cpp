@@ -63,14 +63,19 @@ void CHealthKit::Precache()
 bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 {
 	const bool healed = pPlayer->pev->health < pPlayer->pev->max_health;
-	if( pPlayer->TakeHealth( this, pev->health > 0 ? pev->health : DefaultCapacity(), HEAL_CHARGE ) )
-	{
-		if (healed) {
-			NotifyPickup(pPlayer, pev->classname);
-			pPlayer->EmitSoundScript(GetSoundScript(pickupSoundScript));
-		}
+	const bool needMedkit = !pPlayer->HasNamedPlayerItem( "weapon_medkit" );
 
-		return true;
+	const bool tookHealth = pPlayer->TakeHealth( this, pev->health > 0 ? pev->health : DefaultCapacity(), HEAL_CHARGE );
+	if( !tookHealth && !needMedkit )
+		return false;
+
+	if( needMedkit )
+		pPlayer->GiveNamedItem( "weapon_medkit" );
+
+	if( healed || needMedkit )
+	{
+		NotifyPickup( pPlayer, pev->classname );
+		pPlayer->EmitSoundScript( GetSoundScript( pickupSoundScript ) );
 	}
 
 	return true;
