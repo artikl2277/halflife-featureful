@@ -27,6 +27,17 @@ enum uzi_e {
 	UZI_RELOAD,
 	UZI_DEPLOY,
 	UZI_SHOOT,
+	UZI_DEPLOY2,
+	UZI_UNUSED7,
+	UZI_AKIMBO_PULL,
+	UZI_AKIMBO_IDLE,
+	UZI_AKIMBO_RELOAD_RIGHT,
+	UZI_AKIMBO_RELOAD_LEFT,
+	UZI_AKIMBO_RELOAD_BOTH,
+	UZI_AKIMBO_FIRE_LEFT,
+	UZI_AKIMBO_FIRE_RIGHT,
+	UZI_AKIMBO_FIRE_BOTH,
+	UZI_AKIMBO_DEPLOY,
 };
 
 class CUzi : public CConfigurableWeapon
@@ -36,6 +47,7 @@ public:
 	int WeaponId() const override { return WEAPON_UZI; }
 	bool GetItemInfo(ItemInfo *p) override;
 	WeaponParameters GetDefaultParameters() const override;
+	int AddDuplicate( CBasePlayerWeapon *pOriginal ) override;
 };
 
 LINK_WEAPON_TO_CLASS( weapon_uzi, CUzi )
@@ -43,6 +55,18 @@ LINK_ENTITY_TO_CLASS( weapon_uziakimbo, CUzi ) // Link to single uzi until akimb
 
 //=========================================================
 //=========================================================
+
+// Picking up a second Uzi turns the carried one into akimbo (alt mode)
+int CUzi::AddDuplicate( CBasePlayerWeapon *pOriginal )
+{
+	if( !pOriginal->m_inAltMode )
+	{
+		pOriginal->m_inAltMode = true;
+		CBasePlayerWeapon::AddDuplicate( pOriginal );
+		return true;
+	}
+	return CBasePlayerWeapon::AddDuplicate( pOriginal );
+}
 
 void CUzi::PrecacheDefaultModelSounds()
 {
@@ -115,6 +139,22 @@ WeaponParameters CUzi::GetDefaultParameters() const
 	params.fire.shellOffsetSide = 4;
 	params.fire.shellModel = "models/shell.mdl";
 	params.fire.shellSound = TE_BOUNCE_SHELL;
+	//
+
+	// Akimbo mode (alt mode values), used after picking up a second Uzi
+	params.deploy.animIndex.alt = UZI_AKIMBO_DEPLOY;
+	params.deploy.duration.alt = 1.17f;
+
+	params.idleAnims.Materialize(true, false) = WeaponParameters::IdleAnimArray{
+		WeaponParameters::IdleAnim{UZI_AKIMBO_IDLE, 1.0f, 0.1f},
+	};
+
+	params.fire.anims.Materialize(true, false) = {UZI_AKIMBO_FIRE_BOTH};
+	params.fire.bulletCount.alt = 2;
+	params.fire.ammoPerFire.alt = 2;
+
+	params.reload.animIndex.Materialize(true, false) = {WeaponParameters::ReloadAnim(UZI_AKIMBO_RELOAD_BOTH)};
+	params.reload.duration.alt = 2.02f;
 	//
 
 	// Alt fire
