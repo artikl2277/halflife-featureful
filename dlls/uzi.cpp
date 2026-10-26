@@ -20,6 +20,9 @@
 #include "weapons.h"
 #include "player.h"
 
+// Uzi 1 (single) holds 32 rounds in the clip, Uzi 2 (akimbo) up to params.maxClip
+#define UZI_SINGLE_CLIP 32
+
 enum uzi_e {
 	UZI_IDLE1 = 0,
 	UZI_IDLE2,
@@ -49,6 +52,8 @@ public:
 	WeaponParameters GetDefaultParameters() const override;
 	int AddDuplicate( CBasePlayerWeapon *pOriginal ) override;
 	void SecondaryAttack() override;
+	void ItemPostFrame() override;
+	void Reload() override;
 
 #ifndef CLIENT_DLL
 	int Save( CSave &save ) override;
@@ -86,6 +91,25 @@ int CUzi::AddDuplicate( CBasePlayerWeapon *pOriginal )
 		return true;
 	}
 	return CBasePlayerWeapon::AddDuplicate( pOriginal );
+}
+
+// Single Uzi can't keep more than 32 rounds in the clip, the excess goes back to the reserve
+void CUzi::ItemPostFrame()
+{
+	if( m_pPlayer && !InAltMode() && m_iClip > UZI_SINGLE_CLIP )
+	{
+		m_pPlayer->m_rgAmmo[PrimaryAmmoIndex()] += m_iClip - UZI_SINGLE_CLIP;
+		m_iClip = UZI_SINGLE_CLIP;
+	}
+	CConfigurableWeapon::ItemPostFrame();
+}
+
+// No point in reloading a full single Uzi clip
+void CUzi::Reload()
+{
+	if( !InAltMode() && m_iClip >= UZI_SINGLE_CLIP )
+		return;
+	CConfigurableWeapon::Reload();
 }
 
 // Switching to akimbo is possible only if the player has two Uzis
@@ -202,4 +226,6 @@ WeaponParameters CUzi::GetDefaultParameters() const
 	params.dropAmmo.classname = "ammo_9mmclip";
 
 	return std::move(params);
+}
+(params);
 }
