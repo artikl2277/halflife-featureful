@@ -96,7 +96,7 @@ int CUzi::AddDuplicate( CBasePlayerWeapon *pOriginal )
 // Single Uzi can't keep more than 32 rounds in the clip, the excess goes back to the reserve
 void CUzi::ItemPostFrame()
 {
-	if( m_pPlayer && !InAltMode() && m_iClip > UZI_SINGLE_CLIP )
+	if( m_pPlayer && !InAltMode() && !m_fInReload && !m_switchingMode && m_iClip > UZI_SINGLE_CLIP )
 	{
 		m_pPlayer->m_rgAmmo[PrimaryAmmoIndex()] += m_iClip - UZI_SINGLE_CLIP;
 		m_iClip = UZI_SINGLE_CLIP;
@@ -195,6 +195,12 @@ WeaponParameters CUzi::GetDefaultParameters() const
 	params.fire.shellSound = TE_BOUNCE_SHELL;
 	//
 
+	// Reload: main values must be set before alt values, assigning a main value resets the alt one
+	params.reload.animIndex = {WeaponParameters::ReloadAnim(UZI_RELOAD)};
+	params.reload.duration = 2.5f;
+	params.reload.ammoCount = 32; // Uzi 1: a reload loads 32 rounds
+	//
+
 	// Akimbo mode (alt mode values)
 	params.deploy.animIndex.alt = UZI_AKIMBO_DEPLOY;
 	params.deploy.duration.alt = 1.17f;
@@ -209,6 +215,7 @@ WeaponParameters CUzi::GetDefaultParameters() const
 
 	params.reload.animIndex.Materialize(true, false) = {WeaponParameters::ReloadAnim(UZI_AKIMBO_RELOAD_BOTH)};
 	params.reload.duration.alt = 2.02f;
+	params.reload.ammoCount.alt = 64; // Uzi 2: a reload fills the clip up to 64
 	//
 
 	// Secondary attack switches between one Uzi and two Uzi (akimbo)
@@ -218,11 +225,6 @@ WeaponParameters CUzi::GetDefaultParameters() const
 	params.altMode.attackDelay.main = 1.87f;
 	params.altMode.attackDelay.alt = 1.08f;
 	//
-
-	params.reload.animIndex = {WeaponParameters::ReloadAnim(UZI_RELOAD)};
-	params.reload.duration = 2.5f;
-	params.reload.ammoCount = 32; // Uzi 1: a reload loads 32 rounds
-	params.reload.ammoCount.alt = 64; // Uzi 2: a reload fills the clip up to 64
 
 	params.dropAmmo.classname = "ammo_9mmclip";
 
