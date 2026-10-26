@@ -227,5 +227,3 @@ WeaponParameters CUzi::GetDefaultParameters() const
 
 	return std::move(params);
 }
-(params);
-}
