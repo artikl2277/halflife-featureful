@@ -80,12 +80,27 @@ void CUzi::ItemPostFrame()
 		m_iMaxClip = desiredClip;
 
 #ifndef CLIENT_DLL
-	// Switched back to a single Uzi: give excess bullets back to the reserve
-	if( !m_inAltMode && m_pPlayer && m_iClip > UZI_CLIP_SINGLE )
+	if( m_pPlayer )
 	{
-		const int excess = m_iClip - UZI_CLIP_SINGLE;
-		m_iClip = UZI_CLIP_SINGLE;
-		m_pPlayer->GiveAmmo( excess, pszAmmo1() );
+		if( m_inAltMode && !m_ClientInAltMode )
+		{
+			// Just switched to akimbo: fill the clip up to 64 from the reserve
+			const int ammoIndex = PrimaryAmmoIndex();
+			const int need = UZI_CLIP_AKIMBO - m_iClip;
+			const int take = Q_min( need, m_pPlayer->m_rgAmmo[ammoIndex] );
+			if( take > 0 )
+			{
+				m_iClip += take;
+				m_pPlayer->m_rgAmmo[ammoIndex] -= take;
+			}
+		}
+		else if( !m_inAltMode && m_iClip > UZI_CLIP_SINGLE )
+		{
+			// Switched back to a single Uzi: give excess bullets back to the reserve
+			const int excess = m_iClip - UZI_CLIP_SINGLE;
+			m_iClip = UZI_CLIP_SINGLE;
+			m_pPlayer->GiveAmmo( excess, pszAmmo1() );
+		}
 	}
 #endif
 
