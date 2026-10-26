@@ -48,6 +48,16 @@ public:
 	bool GetItemInfo(ItemInfo *p) override;
 	WeaponParameters GetDefaultParameters() const override;
 	int AddDuplicate( CBasePlayerWeapon *pOriginal ) override;
+	void SecondaryAttack() override;
+
+#ifndef CLIENT_DLL
+	int Save( CSave &save ) override;
+	int Restore( CRestore &restore ) override;
+	static TYPEDESCRIPTION m_SaveData[];
+#endif
+
+	// true once the player has picked up a second Uzi, only then switching to akimbo is allowed
+	bool m_hasSecondUzi = false;
 };
 
 LINK_WEAPON_TO_CLASS( weapon_uzi, CUzi )
@@ -56,16 +66,36 @@ LINK_ENTITY_TO_CLASS( weapon_uziakimbo, CUzi ) // Link to single uzi until akimb
 //=========================================================
 //=========================================================
 
-// Picking up a second Uzi turns the carried one into akimbo (alt mode)
+#ifndef CLIENT_DLL
+TYPEDESCRIPTION CUzi::m_SaveData[] =
+{
+	DEFINE_FIELD( CUzi, m_hasSecondUzi, FIELD_BOOLEAN ),
+};
+
+IMPLEMENT_SAVERESTORE( CUzi, CConfigurableWeapon )
+#endif
+
+// Picking up a second Uzi unlocks switching between one Uzi and akimbo
 int CUzi::AddDuplicate( CBasePlayerWeapon *pOriginal )
 {
-	if( !pOriginal->m_inAltMode )
+	CUzi* original = static_cast<CUzi*>( pOriginal );
+	if( !original->m_hasSecondUzi )
 	{
-		pOriginal->m_inAltMode = true;
+		original->m_hasSecondUzi = true;
 		CBasePlayerWeapon::AddDuplicate( pOriginal );
 		return true;
 	}
 	return CBasePlayerWeapon::AddDuplicate( pOriginal );
+}
+
+// Switching to akimbo is possible only if the player has two Uzis
+void CUzi::SecondaryAttack()
+{
+#ifndef CLIENT_DLL
+	if( !m_hasSecondUzi )
+		return;
+#endif
+	CConfigurableWeapon::SecondaryAttack();
 }
 
 void CUzi::PrecacheDefaultModelSounds()
