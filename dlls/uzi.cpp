@@ -40,9 +40,6 @@ enum uzi_e {
 	UZI_AKIMBO_DEPLOY,
 };
 
-#define UZI_CLIP_SINGLE 32
-#define UZI_CLIP_AKIMBO 64
-
 class CUzi : public CConfigurableWeapon
 {
 public:
@@ -51,7 +48,6 @@ public:
 	bool GetItemInfo(ItemInfo *p) override;
 	WeaponParameters GetDefaultParameters() const override;
 	int AddDuplicate( CBasePlayerWeapon *pOriginal ) override;
-	void ItemPostFrame() override;
 };
 
 LINK_WEAPON_TO_CLASS( weapon_uzi, CUzi )
@@ -70,41 +66,6 @@ int CUzi::AddDuplicate( CBasePlayerWeapon *pOriginal )
 		return true;
 	}
 	return CBasePlayerWeapon::AddDuplicate( pOriginal );
-}
-
-// Clip size depends on the mode: 32 for single Uzi, 64 for akimbo
-void CUzi::ItemPostFrame()
-{
-	const int desiredClip = m_inAltMode ? UZI_CLIP_AKIMBO : UZI_CLIP_SINGLE;
-	if( m_iMaxClip != desiredClip )
-		m_iMaxClip = desiredClip;
-
-#ifndef CLIENT_DLL
-	if( m_pPlayer )
-	{
-		if( m_inAltMode && !m_ClientInAltMode )
-		{
-			// Just switched to akimbo: fill the clip up to 64 from the reserve
-			const int ammoIndex = PrimaryAmmoIndex();
-			const int need = UZI_CLIP_AKIMBO - m_iClip;
-			const int take = Q_min( need, m_pPlayer->m_rgAmmo[ammoIndex] );
-			if( take > 0 )
-			{
-				m_iClip += take;
-				m_pPlayer->m_rgAmmo[ammoIndex] -= take;
-			}
-		}
-		else if( !m_inAltMode && m_iClip > UZI_CLIP_SINGLE )
-		{
-			// Switched back to a single Uzi: give excess bullets back to the reserve
-			const int excess = m_iClip - UZI_CLIP_SINGLE;
-			m_iClip = UZI_CLIP_SINGLE;
-			m_pPlayer->GiveAmmo( excess, pszAmmo1() );
-		}
-	}
-#endif
-
-	CConfigurableWeapon::ItemPostFrame();
 }
 
 void CUzi::PrecacheDefaultModelSounds()
@@ -131,7 +92,7 @@ WeaponParameters CUzi::GetDefaultParameters() const
 	WeaponParameters params;
 
 	params.initialAmmoAmount = 32;
-	params.maxClip = 32;
+	params.maxClip = 64;
 	params.ammoName = "9mm";
 
 	params.worldModel = "models/w_uzi.mdl";
@@ -180,7 +141,7 @@ WeaponParameters CUzi::GetDefaultParameters() const
 	params.fire.shellSound = TE_BOUNCE_SHELL;
 	//
 
-	// Akimbo mode (alt mode values), used after picking up a second Uzi
+	// Akimbo mode (alt mode values)
 	params.deploy.animIndex.alt = UZI_AKIMBO_DEPLOY;
 	params.deploy.duration.alt = 1.17f;
 
@@ -196,16 +157,17 @@ WeaponParameters CUzi::GetDefaultParameters() const
 	params.reload.duration.alt = 2.02f;
 	//
 
-	// Secondary attack switches between a single Uzi and akimbo
+	// Secondary attack switches between one Uzi and two Uzi (akimbo)
 	params.secondaryFireType = SecondaryFireType::SWITCH_MODE;
 	params.altMode.animIndex.main = UZI_AKIMBO_PULL;
-	params.altMode.attackDelay.main = 1.8f;
 	params.altMode.animIndex.alt = UZI_DEPLOY2;
-	params.altMode.attackDelay.alt = 1.0f;
+	params.altMode.attackDelay.main = 1.87f;
+	params.altMode.attackDelay.alt = 1.08f;
 	//
 
 	params.reload.animIndex = {WeaponParameters::ReloadAnim(UZI_RELOAD)};
 	params.reload.duration = 2.5f;
+	params.reload.ammoCount = 32; // a reload loads 32 rounds (akimbo needs two reloads to fill 64)
 
 	params.dropAmmo.classname = "ammo_9mmclip";
 
