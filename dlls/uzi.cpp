@@ -221,7 +221,8 @@ WeaponParameters CUzi::GetDefaultParameters() const
 
 	params.reload.animIndex = {WeaponParameters::ReloadAnim(UZI_RELOAD)};
 	params.reload.duration = 2.5f;
-	params.reload.ammoCount = 32; // a reload loads 32 rounds (akimbo needs two reloads to fill 64)
+	params.reload.ammoCount = 32; // Uzi 1: a reload loads 32 rounds
+	params.reload.ammoCount.alt = 64; // Uzi 2: a reload fills the clip up to 64
 
 	params.dropAmmo.classname = "ammo_9mmclip";
 
