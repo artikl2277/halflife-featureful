@@ -115,11 +115,14 @@ void CUzi::Reload()
 // Switching to akimbo is possible only if the player has two Uzis
 void CUzi::SecondaryAttack()
 {
-#ifndef CLIENT_DLL
+#ifdef CLIENT_DLL
+	// the client doesn't know if the player has two Uzis, so the mode is switched by the server only
+	return;
+#else
 	if( !m_hasSecondUzi )
 		return;
-#endif
 	CConfigurableWeapon::SecondaryAttack();
+#endif
 }
 
 void CUzi::PrecacheDefaultModelSounds()
